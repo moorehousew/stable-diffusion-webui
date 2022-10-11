@@ -14,10 +14,15 @@ from modules.shared import opts, device, cmd_opts
 import ldm.modules.attention
 import ldm.modules.diffusionmodules.model
 
+from transformers.models.clip.modeling_clip import CLIPModel
 attention_CrossAttention_forward = ldm.modules.attention.CrossAttention.forward
 diffusionmodules_model_nonlinearity = ldm.modules.diffusionmodules.model.nonlinearity
 diffusionmodules_model_AttnBlock_forward = ldm.modules.diffusionmodules.model.AttnBlock.forward
 
+attention_CrossAttention_forward = ldm.modules.attention.CrossAttention.forward
+diffusionmodules_model_nonlinearity = ldm.modules.diffusionmodules.model.nonlinearity
+diffusionmodules_model_AttnBlock_forward = ldm.modules.diffusionmodules.model.AttnBlock.forward
+ 
 def apply_optimizations():
     undo_optimizations()
 
@@ -103,13 +108,17 @@ class StableDiffusionModelHijack:
 
 
 class FrozenCLIPEmbedderWithCustomWords(torch.nn.Module):
-    def __init__(self, wrapped, hijack):
+    def __init__(self, wrapped, hijack, version='openai/clip-vit-large-patch14'):
         super().__init__()
         self.wrapped = wrapped
         self.hijack: StableDiffusionModelHijack = hijack
         self.tokenizer = wrapped.tokenizer
         self.token_mults = {}
 
+        self.return_layer = -2 # (Default is None)
+        self.do_final_ln = True # (Default is False)
+        self.transformer = CLIPModel.from_pretrained(version).cuda().text_model
+ 
         tokens_with_parens = [(k, v) for k, v in self.tokenizer.get_vocab().items() if '(' in k or ')' in k or '[' in k or ']' in k]
         for text, ident in tokens_with_parens:
             mult = 1.0
@@ -284,8 +293,13 @@ class FrozenCLIPEmbedderWithCustomWords(torch.nn.Module):
 
         tmp = -opts.CLIP_ignore_last_layers
         if (opts.CLIP_ignore_last_layers == 0):
-            outputs = self.wrapped.transformer(input_ids=tokens, position_ids=position_ids)
-            z = outputs.last_hidden_state
+            outputs = self.wrapped.transformer(input_ids=tokens, output_hidden_states=self.return_layer is not None, return_dict=True)
+            if self.return_layer is not None:
+               z = outputs.hidden_states[self.return_layer]
+               if self.do_final_ln:
+                 z = self.transformer.final_layer_norm(z)
+            else:
+              z = outputs.last_hidden_state
         else:
             outputs = self.wrapped.transformer(input_ids=tokens, position_ids=position_ids, output_hidden_states=tmp)
             z = outputs.hidden_states[tmp]
