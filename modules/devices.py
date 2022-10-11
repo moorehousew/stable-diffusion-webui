@@ -38,6 +38,7 @@ errors.run(enable_tf32, "Enabling TF32")
 
 device = device_gfpgan = device_bsrgan = device_esrgan = device_scunet = device_codeformer = get_optimal_device()
 dtype = torch.float16
+dtype_vae = torch.float16
 
 def randn(seed, shape):
     # Pytorch currently doesn't handle setting randomness correctly when the metal backend is used.
@@ -61,8 +62,11 @@ def randn_without_seed(shape):
     return torch.randn(shape, device=device)
 
 
-def autocast():
+def autocast(disable=False):
     from modules import shared
+
+    if disable:
+        return contextlib.nullcontext()
 
     if dtype == torch.float32 or shared.cmd_opts.precision == "full":
         return contextlib.nullcontext()
