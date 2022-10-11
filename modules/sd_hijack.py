@@ -15,10 +15,15 @@ from modules.sd_hijack_optimizations import invokeAI_mps_available
 import ldm.modules.attention
 import ldm.modules.diffusionmodules.model
 
+from transformers.models.clip.modeling_clip import CLIPModel
 attention_CrossAttention_forward = ldm.modules.attention.CrossAttention.forward
 diffusionmodules_model_nonlinearity = ldm.modules.diffusionmodules.model.nonlinearity
 diffusionmodules_model_AttnBlock_forward = ldm.modules.diffusionmodules.model.AttnBlock.forward
 
+attention_CrossAttention_forward = ldm.modules.attention.CrossAttention.forward
+diffusionmodules_model_nonlinearity = ldm.modules.diffusionmodules.model.nonlinearity
+diffusionmodules_model_AttnBlock_forward = ldm.modules.diffusionmodules.model.AttnBlock.forward
+ 
 def apply_optimizations():
     undo_optimizations()
 
@@ -111,7 +116,7 @@ class StableDiffusionModelHijack:
 
 
 class FrozenCLIPEmbedderWithCustomWords(torch.nn.Module):
-    def __init__(self, wrapped, hijack):
+    def __init__(self, wrapped, hijack, version='openai/clip-vit-large-patch14'):
         super().__init__()
         self.wrapped = wrapped
         self.hijack: StableDiffusionModelHijack = hijack
@@ -119,7 +124,10 @@ class FrozenCLIPEmbedderWithCustomWords(torch.nn.Module):
         self.token_mults = {}
 
         self.comma_token = [v for k, v in self.tokenizer.get_vocab().items() if k == ',</w>'][0]
-
+        self.return_layer = -2 # (Default is None)
+        self.do_final_ln = True # (Default is False)
+        self.transformer = CLIPModel.from_pretrained(version).cuda().text_model
+ 
         tokens_with_parens = [(k, v) for k, v in self.tokenizer.get_vocab().items() if '(' in k or ')' in k or '[' in k or ']' in k]
         for text, ident in tokens_with_parens:
             mult = 1.0
