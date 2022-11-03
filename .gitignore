@@ -26,5 +26,9 @@ __pycache__
 /.idea
 /SwinIR
 /textual_inversion
+.vscode
+/extensions
+/test/stdout.txt
+/test/stderr.txt
 /*.pt
 /personal/*
