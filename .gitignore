@@ -1,5 +1,6 @@
 __pycache__
 *.ckpt
+*.safetensors
 *.pth
 /ESRGAN/*
 /SwinIR/*
@@ -30,5 +31,6 @@ __pycache__
 /extensions
 /test/stdout.txt
 /test/stderr.txt
+/cache.json
 /*.pt
 /personal/*
