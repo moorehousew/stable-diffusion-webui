@@ -1,4 +1,4 @@
-set COMMANDLINE_ARGS=--medvram --force-enable-xformers --precision full --no-half
+set COMMANDLINE_ARGS=--xformers
 
 @echo off
 
