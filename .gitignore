@@ -25,7 +25,6 @@ __pycache__
 /interrogate
 /user.css
 /.idea
-notification.mp3
 /SwinIR
 /textual_inversion
 .vscode
@@ -34,3 +33,5 @@ notification.mp3
 /test/stderr.txt
 /cache.json*
 /config_states/
+/*.pt
+/personal/*

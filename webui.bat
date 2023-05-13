@@ -1,3 +1,5 @@
+set COMMANDLINE_ARGS=--xformers
+
 @echo off
 
 if not defined PYTHON (set PYTHON=python)
