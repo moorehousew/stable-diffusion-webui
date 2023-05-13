@@ -31,6 +31,7 @@ __pycache__
 /extensions
 /test/stdout.txt
 /test/stderr.txt
-/cache.json
+/cache.json*
+/config_states/
 /*.pt
 /personal/*
